@@ -1,11 +1,5 @@
-import Image from "next/image";
-import { ModeToggle } from "./dashboard/__components/Mode";
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return (
-  <div>
-    
-    heloo
-  </div>
-  );
+  redirect('/dashboard');
 }

@@ -1,11 +1,10 @@
-import axios from "axios";
-
-const API_URL ='http://localhost:3001/files'
+import api from './axios';
+import axios from 'axios';
 
 //get all files
 export const getAllFiles = async ()=>{
     try{
-        const response = await axios.get(`${API_URL}`)
+        const response = await api.get('/files')
         return response.data
     }catch(error){
         if(axios.isAxiosError(error)){
@@ -17,7 +16,7 @@ export const getAllFiles = async ()=>{
 //create file
 export const createFile = async (formData: FormData) => {
     try {
-      const response = await axios.post(`${API_URL}/upload`, formData, {
+      const response = await api.post('/files/upload', formData, {
         headers: {
           // Don't manually set multipart headers — axios handles it
         },
@@ -32,11 +31,36 @@ export const createFile = async (formData: FormData) => {
 //delete file
 export const deleteFile = async (id:string)=>{
     try{
-        const response = await axios.delete(`${API_URL}/${id}`)
+        const response = await api.delete(`/files/${id}`)
         return response.data
     }catch(error){
         if(axios.isAxiosError(error)){
             throw new Error(error.response?.data.message || 'Failed to delete file')
         }
+    }
+}
+
+//download file
+export const downloadFile = async ({ id, originalName }: { id: string, originalName: string }) => {
+    try {
+        const response = await api.get(`/files/${id}/download`, {
+            responseType: 'blob',
+        });
+        
+        const blob = new Blob([response.data], { type: response.headers['content-type'] });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', originalName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        return true;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data.message || 'Failed to download file');
+        }
+        throw error;
     }
 }

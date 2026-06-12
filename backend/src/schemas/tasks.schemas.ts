@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+import { User } from './auth.schema';
 
 
 export type TaskDocument = Task & Document;
@@ -12,7 +13,7 @@ export class Task {
   @Prop()
   description: string;
 
-  @Prop({enum:['todo','inProgress','done'],default:'todo'})
+  @Prop({enum:['pending','in-progress','completed'],default:'pending'})
   status: string;
 
   @Prop({enum:['low','medium','high'],default:'medium'})
@@ -20,7 +21,15 @@ export class Task {
 
   @Prop({type: Date})
   dueDate: Date;
-  
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  userId: User;
+
+  @Prop({ type: [String], default: [] })
+  tags: string[];
+
+  @Prop({ type: Number, default: 0 })
+  order: number;
 }
 export const TaskSchema = SchemaFactory.createForClass(Task);
 

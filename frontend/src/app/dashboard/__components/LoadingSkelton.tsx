@@ -1,9 +1,6 @@
 'use client'
-import { useEffect, useState } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Card, CardContent } from "@/components/ui/card"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { AppSidebar } from "./Sidebar"
+import { AppSidebar } from "@/components/app-sidebar"
 
 
 export const LoadingSkeleton = ()=>{

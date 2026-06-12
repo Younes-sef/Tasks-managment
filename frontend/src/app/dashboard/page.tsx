@@ -1,176 +1,62 @@
-"use client"
+"use client";
 
-import { AppSidebar } from "./__components/Sidebar"
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { deleteTask, getTasks } from "@/lib/tasks-api"
-import { useEffect, useState } from "react"
-import { LoadingSkeleton } from "./__components/LoadingSkelton"
-import { TaskCard } from "./__components/TaskCard"
-import { CreateModal } from "./__components/CreateModel"
-import { ModeToggle } from "./__components/Mode"
-import { Plus, Sparkles } from "lucide-react"
-
-interface Task {
-  _id: string
-  title: string
-  description: string
-  status: string
-  priority: string
-  dueDate: string
-}
-interface User {
-  name: string
-  email: string
-  role: string
-}
+import { useQueryClient } from "@tanstack/react-query";
+import { CreateModal } from "./__components/CreateModel";
+import { Sparkles, Bell } from "lucide-react";
+import { KanbanBoard } from "./__components/KanbanBoard";
+import { AppLayout } from "@/components/app-layout";
 
 export default function Page() {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [user, setUser] = useState<User | null>(null)
+  const queryClient = useQueryClient();
 
-  //get tasks
-  const fetchTasks = async () => {
-    try {
-      const tasks = await getTasks()
-      setTasks(tasks)
-    } catch (error) {
-      setError("Failed to fetch tasks")
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const handleTaskCreated = () => {
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  };
 
-  useEffect(() => {
-    fetchTasks()
-  }, [])
-  // delete task
-  const handleDelete = async (taskId: string) => {
-    try {
-      await deleteTask(taskId)
-      setTasks((prev) => prev.filter((t) => t._id !== taskId))
-    } catch (error) {
-      console.error("Failed to delete task:", error)
-    }
-  }
-  // update Task
-  const handleUpdate = (updatedTask: Task) => {
-    setTasks((prev) => prev.map((task) => (task._id === updatedTask._id ? updatedTask : task)))
-  }
-  // create task
-  const handleTaskCreated = (newTask: Task) => {
-    setTasks((prev) => [newTask, ...prev])
-  }
-
-  // Load user from localStorage
-  useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("user")
-      if (storedUser && storedUser !== "undefined") {
-        setUser(JSON.parse(storedUser))
-      }
-    } catch (err) {
-      console.error("Failed to parse user from localStorage", err)
-      localStorage.removeItem("user")
-    }
-  }, [])
-
-  if (isLoading) return <LoadingSkeleton />
+  const headerActions = (
+    <div className="flex-1 max-w-md mx-8 hidden md:block">
+      <div className="relative group">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+          </svg>
+        </div>
+        <input
+          type="text"
+          className="block w-full pl-10 pr-3 py-2 border border-border rounded-xl leading-5 bg-background/50 backdrop-blur-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 sm:text-sm"
+          placeholder="Search tasks, tags, or projects... (Cmd+K)"
+        />
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50  transition-all duration-500 overflow-x-hidden">
-      {/* Decorative background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/20 to-indigo-200/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-200/20 rounded-full blur-3xl" />
+    <AppLayout
+      icon={Sparkles}
+      title="Dashboard"
+      subtitle="Manage your tasks efficiently"
+      iconBgClass="bg-primary"
+      headerActions={
+        <div className="flex items-center gap-3 w-full">
+          {headerActions}
+          <button className="relative p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted ml-auto">
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-background" />
+          </button>
+        </div>
+      }
+    >
+      <div className="flex-1 relative w-full h-full">
+        <KanbanBoard />
       </div>
 
-      <SidebarProvider>
-        <div className="flex min-w-screen min-h-screen relative">
-          <AppSidebar user={user} />
-
-          <div className="flex-1 flex flex-col">
-            {/* Enhanced Header */}
-            <header className="flex h-20 items-center justify-between border-b border-slate-200/60 px-8 bg-white/80 backdrop-blur-xl dark:bg-zinc-900 dark:border-zinc-700 shadow-sm">
-              <div className="flex items-center gap-4">
-                <SidebarTrigger className="-ml-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg p-2 transition-colors" />
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
-                    <Sparkles className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
-                      Dashboard
-                    </h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 -mt-1">Manage your tasks efficiently</p>
-                  </div>
-                </div>
-              </div>
-              <ModeToggle />
-            </header>
-
-            {/* Enhanced Main Content */}
-            <main className="p-8 flex-1 dark:bg-zinc-900 relative">
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 shadow-sm">
-                  <p className="font-medium">{error}</p>
-                </div>
-              )}
-
-              {tasks.length === 0 && !error ? (
-                <div className="text-center py-20">
-                  <div className="max-w-md mx-auto">
-                    <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
-                      <Plus className="w-10 h-10 text-blue-600" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-3">No tasks yet</h3>
-                    <p className="text-slate-600 dark:text-slate-400 text-lg mb-2">
-                      Create your first task to get started!
-                    </p>
-                    <p className="text-slate-500 dark:text-slate-500 text-sm">
-                      Click the + button to add a new task and begin organizing your work.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Stats or header info could go here */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-xl font-semibold text-slate-800 dark:text-white">Your Tasks</h2>
-                      <p className="text-slate-600 dark:text-slate-400 text-sm">
-                        {tasks.length} task{tasks.length !== 1 ? "s" : ""} total
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Enhanced Task Grid */}
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3  gap-6">
-                    {tasks.map((task) => (
-                      <TaskCard
-                        key={task._id}
-                        task={task}
-                        onDelete={() => handleDelete(task._id)}
-                        onUpdate={handleUpdate}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </main>
-
-            {/* Enhanced Floating Button */}
-            <div className="fixed bottom-8 right-8 z-50">
-              <div className="relative">
-                {/* Glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full blur-lg opacity-30 animate-pulse" />
-                <CreateModal onTaskCreated={handleTaskCreated} />
-              </div>
-            </div>
-          </div>
+      {/* Floating Create Button */}
+      <div className="fixed bottom-8 right-8 z-50">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full blur-lg opacity-30 animate-pulse pointer-events-none" />
+          <CreateModal onTaskCreated={handleTaskCreated} />
         </div>
-      </SidebarProvider>
-    </div>
-  )
+      </div>
+    </AppLayout>
+  );
 }

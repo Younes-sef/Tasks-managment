@@ -7,16 +7,16 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+} from "@/components/ui/sheet"
 import { Edit } from "lucide-react"
-import { updataTask } from "@/lib/tasks-api"
+import { useTasks } from "@/hooks/use-tasks"
 
 interface Task {
   _id: string
@@ -29,12 +29,12 @@ interface Task {
 
 interface EditModalProps {
   task: Task
-  onUpdate: (updatedTask: Task) => void
+  onUpdate?: (updatedTask: Task) => void
 }
 
 export function EditModal({ task, onUpdate }: EditModalProps) {
   const [open, setOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const { updateTask } = useTasks()
   const [formData, setFormData] = useState({
     title: task.title,
     description: task.description,
@@ -43,27 +43,24 @@ export function EditModal({ task, onUpdate }: EditModalProps) {
     dueDate: task.dueDate.split('T')[0], // Format date for input
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
 
-    try {
-      const updatedTask = await updataTask(task._id, {
+    updateTask({
+      id: task._id,
+      taskData: {
         title: formData.title,
         description: formData.description,
         status: formData.status,
+        priority: formData.priority,
         dueDate: formData.dueDate,
-      })
-      
-      // Update the task in the parent component
+      }
+    })
+    
+    if (onUpdate) {
       onUpdate({ ...task, ...formData })
-      setOpen(false)
-    } catch (error) {
-      console.error("Failed to update task:", error)
-      // You might want to show a toast notification here
-    } finally {
-      setIsLoading(false)
     }
+    setOpen(false)
   }
 
   const handleInputChange = (field: string, value: string) => {
@@ -74,49 +71,51 @@ export function EditModal({ task, onUpdate }: EditModalProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
         <Button variant="outline" size="sm">
           <Edit className="size-4 mr-1" />
           Edit
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[525px]">
-        <DialogHeader>
-          <DialogTitle>Edit Task</DialogTitle>
-          <DialogDescription>
-            Make changes to your task here. Click save when you're done.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+      </SheetTrigger>
+      <SheetContent className="sm:max-w-[500px] border-l border-border bg-background/90 backdrop-blur-xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Edit Task</SheetTitle>
+          <SheetDescription>
+            Make changes to your task here. Click save when you&apos;re done.
+          </SheetDescription>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="mt-6">
+          <div className="grid gap-6 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="edit-title">Title</Label>
               <Input
-                id="title"
+                id="edit-title"
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 placeholder="Enter task title"
                 required
+                className="bg-background/50 border-border"
               />
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="edit-description">Description</Label>
               <Textarea
-                id="description"
+                id="edit-description"
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 placeholder="Enter task description"
-                rows={3}
+                rows={5}
+                className="bg-background/50 border-border"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="edit-status">Status</Label>
                 <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background/50 border-border">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -128,9 +127,9 @@ export function EditModal({ task, onUpdate }: EditModalProps) {
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="priority">Priority</Label>
+                <Label htmlFor="edit-priority">Priority</Label>
                 <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-background/50 border-border">
                     <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
                   <SelectContent>
@@ -143,26 +142,27 @@ export function EditModal({ task, onUpdate }: EditModalProps) {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="dueDate">Due Date</Label>
+              <Label htmlFor="edit-dueDate">Due Date</Label>
               <Input
-                id="dueDate"
+                id="edit-dueDate"
                 type="date"
                 value={formData.dueDate}
                 onChange={(e) => handleInputChange('dueDate', e.target.value)}
                 required
+                className="bg-background/50 border-border"
               />
             </div>
           </div>
-          <DialogFooter>
+          <SheetFooter className="mt-8">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Saving..." : "Save Changes"}
+            <Button type="submit">
+              Save Changes
             </Button>
-          </DialogFooter>
+          </SheetFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   )
 }

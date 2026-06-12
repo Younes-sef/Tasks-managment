@@ -1,14 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { getAllFiles, createFile, deleteFile } from "@/lib/files-api"
+import { useState } from "react"
+import { useFiles } from "@/hooks/use-files"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Trash2, Plus, Sparkles, Upload, CheckCircle, X, AlertCircle } from "lucide-react"
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
-import { AppSidebar } from "../dashboard/__components/Sidebar"
-import { ModeToggle } from "../dashboard/__components/Mode"
+import { Trash2, Plus, Sparkles, Upload, CheckCircle, X, AlertCircle, Download } from "lucide-react"
+import { AppLayout } from "@/components/app-layout"
 
 interface Toast {
   id: string
@@ -17,8 +15,10 @@ interface Toast {
   type: "success" | "error" | "info"
 }
 
+
+
 export default function FilesPage() {
-  const [files, setFiles] = useState<any[]>([])
+  const { files, createFileAsync, deleteFileAsync, downloadFileAsync } = useFiles()
   const [file, setFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -39,19 +39,6 @@ export default function FilesPage() {
     setToasts((prev) => prev.filter((toast) => toast.id !== id))
   }
 
-  useEffect(() => {
-    const fetchFiles = async () => {
-      try {
-        const data = await getAllFiles()
-        setFiles(data)
-      } catch (err) {
-        console.error("Failed to fetch files", err)
-      }
-    }
-
-    fetchFiles()
-  }, [])
-
   const handleUpload = async () => {
     if (!file) return alert("Please select a file")
 
@@ -60,9 +47,7 @@ export default function FilesPage() {
 
     try {
       setUploading(true)
-      await createFile(formData)
-      const data = await getAllFiles()
-      setFiles(data)
+      await createFileAsync(formData)
 
       // Show success toast
       showToast("Upload Successful!", `${file.name} has been uploaded successfully.`, "success")
@@ -71,8 +56,9 @@ export default function FilesPage() {
       // Reset file input
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
       if (fileInput) fileInput.value = ""
-    } catch (err: any) {
-      showToast("Upload Failed", err.message || "Failed to upload file", "error")
+    } catch (err) {
+      const error = err as Error
+      showToast("Upload Failed", error.message || "Failed to upload file", "error")
     } finally {
       setUploading(false)
     }
@@ -80,46 +66,34 @@ export default function FilesPage() {
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteFile(id)
-      setFiles((prev) => prev.filter((f) => f._id !== id))
+      await deleteFileAsync(id)
 
       showToast("File Deleted", "File has been deleted successfully.", "success")
-    } catch (err: any) {
-      showToast("Delete Failed", err.message || "Failed to delete file", "error")
+    } catch (err) {
+      const error = err as Error
+      showToast("Delete Failed", error.message || "Failed to delete file", "error")
+    }
+  }
+
+  const handleDownload = async (id: string, originalName: string) => {
+    try {
+      showToast("Downloading", "Starting file download...", "info")
+      await downloadFileAsync({ id, originalName })
+      showToast("Download Complete", "File has been downloaded successfully.", "success")
+    } catch (err) {
+      const error = err as Error
+      showToast("Download Failed", error.message || "Failed to download file", "error")
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200/20 to-indigo-200/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-200/20 rounded-full blur-3xl" />
-      </div>
-
-      <SidebarProvider>
-        <div className="flex min-w-screen min-h-screen relative">
-          <AppSidebar user={null} />
-
-          <div className="flex-1 flex flex-col">
-            <header className="flex h-20 items-center justify-between border-b border-slate-200/60 px-8 bg-white/80 backdrop-blur-xl dark:bg-zinc-900 dark:border-zinc-700 shadow-sm">
-              <div className="flex items-center gap-4">
-                <SidebarTrigger className="-ml-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg p-2 transition-colors" />
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
-                    <Sparkles className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
-                      Files Manager
-                    </h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 -mt-1">Upload and manage your files</p>
-                  </div>
-                </div>
-              </div>
-              <ModeToggle />
-            </header>
-
-            <main className="p-8 flex-1 grid grid-cols-1 dark:bg-zinc-900 lg:grid-cols-3 gap-6">
+    <AppLayout
+      icon={Sparkles}
+      title="Files Manager"
+      subtitle="Upload and manage your files"
+      iconBgClass="bg-gradient-to-br from-blue-500 to-indigo-600 shadow-blue-500/20"
+    >
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="col-span-1">
                 <Card className="h-full shadow-lg border-0 bg-white/80 backdrop-blur-sm dark:bg-zinc-800/80">
                   <CardHeader className="text-center pb-4">
@@ -222,14 +196,24 @@ export default function FilesPage() {
                                 </p>
                               </div>
                             </div>
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              onClick={() => handleDelete(file._id)}
-                              className="hover:bg-red-600 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => handleDownload(file._id, file.originalName)}
+                                className="hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                onClick={() => handleDelete(file._id)}
+                                className="hover:bg-red-600 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -237,9 +221,7 @@ export default function FilesPage() {
                   </CardContent>
                 </Card>
               </div>
-            </main>
-          </div>
-        </div>
+      </div>
 
         {/* Custom Toast Container */}
         <div className="fixed bottom-4 right-4 z-50 space-y-2">
@@ -281,7 +263,6 @@ export default function FilesPage() {
             </div>
           ))}
         </div>
-      </SidebarProvider>
-    </div>
+    </AppLayout>
   )
 }

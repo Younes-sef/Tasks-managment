@@ -9,29 +9,29 @@ import { Task,TaskDocument } from 'src/schemas/tasks.schemas';
 @Injectable()
 export class TasksService {
     constructor(@InjectModel(Task.name) private taskModel: Model<TaskDocument>) {}
-    async create(CreateTaskDto:CreateTaskDto):Promise<Task>{
-        const createdTask = new this.taskModel(CreateTaskDto);
+    async create(CreateTaskDto:CreateTaskDto, userId: string):Promise<Task>{
+        const createdTask = new this.taskModel({ ...CreateTaskDto, userId });
         return createdTask.save();
     }
-    async findAll():Promise<Task[]>{
-        return this.taskModel.find().exec();
+    async findAll(userId: string):Promise<Task[]>{
+        return this.taskModel.find({ userId }).exec();
     }
-    async findOne(id:string):Promise<Task>{
-        const task =await this.taskModel.findById(id).exec()
+    async findOne(id:string, userId: string):Promise<Task>{
+        const task =await this.taskModel.findOne({ _id: id, userId }).exec()
         if(!task){
             throw new NotFoundException('Task not found');
         }
         return task;
     }
-    async update(id:string,updateTaskDto:UpdateTaskDto):Promise<Task>{
-        const updatedTask = await this.taskModel.findByIdAndUpdate(id,updateTaskDto,{new:true}).exec();
+    async update(id:string,updateTaskDto:UpdateTaskDto, userId: string):Promise<Task>{
+        const updatedTask = await this.taskModel.findOneAndUpdate({ _id: id, userId },updateTaskDto,{new:true}).exec();
         if(!updatedTask){
             throw new NotFoundException('Task not found');
         }
         return updatedTask;
     }
-    async remove(id:string):Promise<Task>{
-        const deletedTask = await this.taskModel.findByIdAndDelete(id).exec();
+    async remove(id:string, userId: string):Promise<Task>{
+        const deletedTask = await this.taskModel.findOneAndDelete({ _id: id, userId }).exec();
         if(!deletedTask){
             throw new NotFoundException('Task not found');
         }

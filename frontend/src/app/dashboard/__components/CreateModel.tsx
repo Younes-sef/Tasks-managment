@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Plus } from "lucide-react"
-import { createTask } from "@/lib/tasks-api"
+import { useTasks } from "@/hooks/use-tasks"
 
 interface Task {
   _id: string
@@ -28,60 +28,47 @@ interface Task {
 }
 
 interface CreateModalProps {
-  onTaskCreated: (newTask: Task) => void
+  onTaskCreated: (newTask?: Task) => void
 }
 
 export function CreateModal({ onTaskCreated }: CreateModalProps) {
   const [open, setOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const { createTask } = useTasks()
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     status: "pending",
     priority: "medium",
     dueDate: "",
+    tags: "",
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
 
     try {
-      console.log('Submitting task data:', formData) // Debug log
-      
-      const newTask = await createTask({
+      createTask({
         title: formData.title.trim(),
         description: formData.description.trim(),
         status: formData.status,
         priority: formData.priority,
         dueDate: formData.dueDate,
+        tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
       })
       
-      console.log('Task created successfully:', newTask) // Debug log
+      onTaskCreated()
       
-      // Add the new task to the parent component
-      onTaskCreated(newTask)
-      
-      // Reset form and close modal
       setFormData({
         title: "",
         description: "",
         status: "pending",
         priority: "medium",
         dueDate: "",
+        tags: "",
       })
       setOpen(false)
     } catch (error) {
       console.error("Failed to create task:", error)
-      
-      // Show more detailed error info
-      if (error instanceof Error) {
-        alert(`Failed to create task: ${error.message}`)
-      } else {
-        alert('Failed to create task: Unknown error occurred')
-      }
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -102,6 +89,7 @@ export function CreateModal({ onTaskCreated }: CreateModalProps) {
         status: "pending",
         priority: "medium",
         dueDate: "",
+        tags: "",
       })
     }
   }
@@ -109,15 +97,17 @@ export function CreateModal({ onTaskCreated }: CreateModalProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-          <Plus className="size-4 mr-2" />
-          Create Task
+        <Button id="create-task-trigger" className="h-14 px-6 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 active:scale-95 border border-primary/20">
+          <Plus className="size-5 mr-2" />
+          <span className="font-semibold text-base">Create Task</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[525px] border-border bg-background/80 backdrop-blur-2xl shadow-2xl overflow-hidden">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none -z-10" />
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-2xl font-bold tracking-tight">Create New Task</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Add a new task to your list. Fill in the details below and click create.
           </DialogDescription>
         </DialogHeader>
@@ -130,7 +120,6 @@ export function CreateModal({ onTaskCreated }: CreateModalProps) {
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 placeholder="Enter task title"
-                required
               />
             </div>
             
@@ -175,23 +164,35 @@ export function CreateModal({ onTaskCreated }: CreateModalProps) {
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) => handleInputChange('dueDate', e.target.value)}
-                required
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="dueDate">Due Date</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={(e) => handleInputChange('dueDate', e.target.value)}
+                  className="bg-background/50 border-border focus-visible:ring-primary/50"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="tags">Tags (comma separated)</Label>
+                <Input
+                  id="tags"
+                  value={formData.tags}
+                  onChange={(e) => handleInputChange('tags', e.target.value)}
+                  placeholder="e.g. bug, feature, urgent"
+                  className="bg-background/50 border-border focus-visible:ring-primary/50"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Task"}
+            <Button type="submit">
+              Create Task
             </Button>
           </DialogFooter>
         </form>

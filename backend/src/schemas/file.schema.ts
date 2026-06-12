@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+import { User } from './auth.schema';
+import { Task } from './tasks.schemas';
 
 export type FileDocument = File & Document;
 
@@ -17,10 +19,11 @@ export class File extends Document {
   @Prop({ required: true })
   size: number;
 
-  @Prop({ required: false })
-  taskId?: string;
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Task', required: false })
+  taskId?: Task;
 
- 
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  userId: User;
 
   @Prop({ type: Object, required: false })
   metadata?: Record<string, any>;

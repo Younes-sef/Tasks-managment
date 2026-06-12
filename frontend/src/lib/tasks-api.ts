@@ -1,12 +1,10 @@
-import axios from "axios";
-
-const API_URL ='http://localhost:3001/tasks'
-
+import api from './axios';
+import axios from 'axios';
 
 //get all tasks
 export  const getTasks = async ()=>{
     try{
-        const response = await axios.get(`${API_URL}`)
+        const response = await api.get('/tasks')
         return response.data
     }catch(error){
         if(axios.isAxiosError(error)){
@@ -17,7 +15,7 @@ export  const getTasks = async ()=>{
 //get task by id
 export const getTaskById = async (id:string)=>{
     try{
-        const response = await axios.get(`${API_URL}/${id}`)
+        const response = await api.get(`/tasks/${id}`)
         return response.data
     }catch(error){
         if(axios.isAxiosError(error)){
@@ -32,12 +30,12 @@ export const createTask = async (taskData: {
     status: string
     priority: string
     dueDate: string
+    tags?: string[]
   }) => {
     try {
-      console.log('API URL:', API_URL)
       console.log('Creating task with data:', taskData)
       
-      const response = await axios.post(API_URL, taskData, {
+      const response = await api.post('/tasks', taskData, {
         headers: {
           'Content-Type': 'application/json',
         }
@@ -49,16 +47,6 @@ export const createTask = async (taskData: {
       console.error('Full error object:', error)
       
       if (axios.isAxiosError(error)) {
-        console.error('Response status:', error.response?.status)
-        console.error('Response headers:', error.response?.headers)
-        console.error('Response data:', error.response?.data)
-        console.error('Request config:', {
-          url: error.config?.url,
-          method: error.config?.method,
-          data: error.config?.data,
-          headers: error.config?.headers
-        })
-        
         // Try to get more specific error message
         const errorMessage = error.response?.data?.message || 
                             error.response?.data?.error || 
@@ -72,14 +60,15 @@ export const createTask = async (taskData: {
     }
   }
 //update task
-export const updataTask= async (id:string,taskData:{
+export const updateTask = async (id:string, taskData: Partial<{
     title:string,
     description:string,
     status:string,
     dueDate:string,
-})=>{
+    priority:string,
+}>) => {
     try{
-        const response = await axios.put(`${API_URL}/${id}`,taskData)
+        const response = await api.put(`/tasks/${id}`,taskData)
         return response.data
     }catch(error){
         if(axios.isAxiosError(error)){
@@ -90,7 +79,7 @@ export const updataTask= async (id:string,taskData:{
 //delete task
 export const deleteTask = async (id:string)=>{
     try{
-        const response = await axios.delete(`${API_URL}/${id}`)
+        const response = await api.delete(`/tasks/${id}`)
         return response.data
     }catch(error){
         if(axios.isAxiosError(error)){
