@@ -19,7 +19,6 @@ import {
   AlertCircle,
   Loader2,
   Flag,
-  Zap,
 } from "lucide-react"
 import { useTasks } from "@/hooks/use-tasks"
 
