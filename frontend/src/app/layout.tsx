@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "./dashboard/__components/theme-provider";
+import { ThemeProvider } from "./(main)/dashboard/__components/theme-provider";
 import { Providers } from "./providers";
 import { Toaster } from "sonner";
 import { ClerkProvider } from '@clerk/nextjs'

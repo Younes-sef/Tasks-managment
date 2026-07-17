@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { CreateModal } from "./__components/CreateModel";
 import { Sparkles, Bell } from "lucide-react";
 import { KanbanBoard } from "./__components/KanbanBoard";
@@ -8,6 +9,7 @@ import { AppLayout } from "@/components/app-layout";
 
 export default function Page() {
   const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleTaskCreated = () => {
     queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -23,6 +25,8 @@ export default function Page() {
         </div>
         <input
           type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="block w-full pl-10 pr-3 py-2 border border-border rounded-xl leading-5 bg-background/50 backdrop-blur-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300 sm:text-sm"
           placeholder="Search tasks, tags, or projects... (Cmd+K)"
         />
@@ -47,7 +51,7 @@ export default function Page() {
       }
     >
       <div className="flex-1 relative w-full h-full">
-        <KanbanBoard />
+        <KanbanBoard searchQuery={searchQuery} />
       </div>
 
       {/* Floating Create Button */}

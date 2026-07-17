@@ -144,7 +144,7 @@ function SortableTaskCard({ task, onDelete, onUpdate }: { task: Task; onDelete: 
   )
 }
 
-export function KanbanBoard() {
+export function KanbanBoard({ searchQuery = "" }: { searchQuery?: string }) {
   const { tasks, isLoading, error, updateTask, deleteTask } = useTasks()
   const [activeTask, setActiveTask] = useState<Task | null>(null)
 
@@ -159,14 +159,26 @@ export function KanbanBoard() {
     })
   )
 
+  const filteredTasks = useMemo(() => {
+    if (!searchQuery) return tasks;
+    const query = searchQuery.toLowerCase();
+    return tasks.filter((t) => {
+      return (
+        t.title.toLowerCase().includes(query) ||
+        (t.description && t.description.toLowerCase().includes(query)) ||
+        (t.tags && t.tags.some((tag) => tag.toLowerCase().includes(query)))
+      );
+    });
+  }, [tasks, searchQuery]);
+
   const columns = useMemo(() => {
     const cols = {
-      Pending: tasks.filter((t) => t.status.toLowerCase() === "pending"),
-      "In Progress": tasks.filter((t) => t.status.toLowerCase() === "in progress" || t.status.toLowerCase() === "in-progress"),
-      Completed: tasks.filter((t) => t.status.toLowerCase() === "completed"),
+      Pending: filteredTasks.filter((t) => t.status.toLowerCase() === "pending"),
+      "In Progress": filteredTasks.filter((t) => t.status.toLowerCase() === "in progress" || t.status.toLowerCase() === "in-progress"),
+      Completed: filteredTasks.filter((t) => t.status.toLowerCase() === "completed"),
     }
     return cols
-  }, [tasks])
+  }, [filteredTasks])
 
   if (isLoading) {
     return (
@@ -235,7 +247,7 @@ export function KanbanBoard() {
             </div>
             <div>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Tasks</p>
-              <h4 className="text-xl font-bold text-slate-800 dark:text-slate-100">{tasks.length}</h4>
+              <h4 className="text-xl font-bold text-slate-800 dark:text-slate-100">{filteredTasks.length}</h4>
             </div>
           </div>
           

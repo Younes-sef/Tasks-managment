@@ -473,40 +473,7 @@ export default function ProgressTracking() {
                     </CardContent>
                   </Card>
 
-                  {/* Quick Actions */}
-                  <Card className="shadow-lg border-0 bg-white/80 backdrop-blur-sm dark:bg-zinc-800/80">
-                    <CardHeader>
-                      <CardTitle className="text-lg font-semibold text-slate-800 dark:text-white">
-                        Quick Actions
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <Button
-                        className="w-full justify-start"
-                        variant="outline"
-                        onClick={() => (window.location.href = "/tasks/new")}
-                      >
-                        <Zap className="w-4 h-4 mr-2" />
-                        Add New Task
-                      </Button>
-                      <Button
-                        className="w-full justify-start"
-                        variant="outline"
-                        onClick={() => (window.location.href = "/calendar")}
-                      >
-                        <Calendar className="w-4 h-4 mr-2" />
-                        View Calendar
-                      </Button>
-                      <Button
-                        className="w-full justify-start"
-                        variant="outline"
-                        onClick={() => window.location.reload()}
-                      >
-                        <BarChart3 className="w-4 h-4 mr-2" />
-                        Refresh Data
-                      </Button>
-                    </CardContent>
-                  </Card>
+
                 </div>
               </div>
       </div>
