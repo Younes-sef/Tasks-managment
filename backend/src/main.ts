@@ -43,6 +43,6 @@ async function bootstrap() {
     credentials: true, // Optional, but helps for cookies/auth headers
   });
 
-  await app.listen(3001); // ✅ Make sure this matches your current port
+  await app.listen(process.env.PORT || 3001, '0.0.0.0'); // ✅ Bind to 0.0.0.0 for Render
 }
 bootstrap();
